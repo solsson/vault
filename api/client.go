@@ -28,6 +28,7 @@ import (
 const (
 	EnvVaultAddress       = "VAULT_ADDR"
 	EnvVaultAgentAddr     = "VAULT_AGENT_ADDR"
+	EnvVaultBearerToken   = "VAULT_BEARER_TOKEN"
 	EnvVaultCACert        = "VAULT_CACERT"
 	EnvVaultCAPath        = "VAULT_CAPATH"
 	EnvVaultClientCert    = "VAULT_CLIENT_CERT"
@@ -478,6 +479,10 @@ func NewClient(c *Config) (*Client, error) {
 
 	if token := os.Getenv(EnvVaultToken); token != "" {
 		client.token = token
+	}
+
+	if bearerAuthToken := os.Getenv(EnvVaultBearerToken); bearerAuthToken != "" {
+		client.AddHeader("Authorization", "Bearer "+bearerAuthToken)
 	}
 
 	if namespace := os.Getenv(EnvVaultNamespace); namespace != "" {

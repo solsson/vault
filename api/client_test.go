@@ -77,6 +77,35 @@ func TestClientSetAddress(t *testing.T) {
 	}
 }
 
+func TestClientBearerAuthToken(t *testing.T) {
+	var seenBearerToken string
+	handler := func(w http.ResponseWriter, req *http.Request) {
+		seenBearerToken = req.Header.Get("Authorization")
+	}
+	config, ln := testHTTPServer(t, http.HandlerFunc(handler))
+	defer ln.Close()
+
+	oldBearerAuthToken := os.Getenv(EnvVaultBearerToken)
+	defer os.Setenv(EnvVaultBearerToken, oldBearerAuthToken)
+	os.Setenv(EnvVaultBearerToken, "test")
+
+	client, err := NewClient(config)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	_, err = client.RawRequest(client.NewRequest("GET", "/"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	// oauth2.0 has `Bearer` as schema
+	// https://tools.ietf.org/html/rfc6750#section-6.1.1
+	if seenBearerToken != "Bearer test" {
+		t.Fatalf("Bad: %s", seenBearerToken)
+	}
+}
+
 func TestClientToken(t *testing.T) {
 	tokenValue := "foo"
 	handler := func(w http.ResponseWriter, req *http.Request) {}
